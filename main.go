@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -26,13 +25,13 @@ type MyClient struct {
 }
 
 type TaskDb struct {
-	ID            primitive.ObjectID `bson:"_id"`
-	Title         string             `bson:"title"`
-	DateStart     time.Time          `bson:"dateStart"`
-	DateStop      time.Time          `bson:"dateStop"`
-	EstimatedTime float64            `bson:"estimatedTime"`
-	Status        Status             `bson:"status"`
-	Tag           string             `bson:"tag"`
+	ID            string    `bson:"_id"`
+	Title         string    `bson:"title"`
+	DateStart     time.Time `bson:"dateStart"`
+	DateStop      time.Time `bson:"dateStop"`
+	EstimatedTime float64   `bson:"estimatedTime"`
+	Status        Status    `bson:"status"`
+	Tag           string    `bson:"tag"`
 }
 
 type Task struct {
@@ -61,7 +60,8 @@ func Connect() MyClient {
 	return MyClient{client}
 }
 
-func (client MyClient) GetAllTasks() {
+func (client MyClient) GetAllTasks() []TaskDb {
+	tab := []TaskDb{}
 	usersCollection := client.Database("testing").Collection("users")
 	cur, err := usersCollection.Find(context.TODO(), bson.D{})
 	if err != nil {
@@ -72,22 +72,37 @@ func (client MyClient) GetAllTasks() {
 		//print element data from collection
 		var a TaskDb
 		cur.Decode(&a)
+		tab = append(tab, a)
 	}
 	if err := cur.Err(); err != nil {
 		log.Fatal(err)
 	}
+	return tab
 }
 
-func (client MyClient) NewTask(data Task) error {
+func (client MyClient) NewTask(data Task) (*mongo.InsertOneResult, error) {
 	usersCollection := client.Database("testing").Collection("users")
-	_, err := usersCollection.InsertOne(context.TODO(), data)
-	return err
+	index, err := usersCollection.InsertOne(context.TODO(), data)
+	//fmt.Println(index)
+	return index, err
+}
+
+func (client MyClient) RemoveTask(data string) (*mongo.DeleteResult, error) {
+	usersCollection := client.Database("testing").Collection("users")
+	index, err := usersCollection.DeleteOne(context.TODO(), bson.M{"title": data})
+	//fmt.Println(index, err)
+	return index, err
 }
 
 func main() {
 	fmt.Println("Lançement du programme ...")
 	client := Connect()
-	client.NewTask(Task{Title: "bj", DateStart: time.Date(2020, time.April,
-		11, 21, 34, 01, 0, time.UTC), DateStop: time.Date(2020, time.April,
-		11, 21, 34, 01, 0, time.UTC), EstimatedTime: time.Duration.Hours(1), Status: Status()})
+	a := client.GetAllTasks()
+	for _, item := range a {
+		fmt.Println(item)
+	}
+	//client.NewTask(Task{Title: "tttt", DateStart: time.Date(2020, time.April,
+	//	11, 21, 34, 01, 0, time.UTC), DateStop: time.Date(2020, time.April,
+	//	11, 21, 34, 01, 0, time.UTC), EstimatedTime: time.Duration.Hours(1), Status: Status(Progress), Tag: "mon tagg"})
+	client.RemoveTask("tttt")
 }
