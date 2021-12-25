@@ -50,6 +50,10 @@ type Task struct {
 	Tag           string    `bson:"Tag"`
 }
 
+type Search struct {
+	Title string `bson:"Title,omitempty"`
+}
+
 func Connect() MyClient {
 	clientOptions := options.Client().ApplyURI("mongodb://Arnaud:pass@localhost/testing")
 	client, err := mongo.Connect(context.TODO(), clientOptions)
@@ -139,19 +143,37 @@ var client MyClient
 
 func main() {
 	client = Connect()
-	r := mux.NewRouter()
-	// Routes consist of a path and a handler function.
-	r.HandleFunc("/Tasks", GetAllTasks).Methods(http.MethodGet)
-	r.HandleFunc("/Task/{id}", GetTaskID).Methods(http.MethodGet)
-	r.HandleFunc("/Task/{id}", DeleteTaskID).Methods(http.MethodDelete)
-	r.HandleFunc("/Task/{id}", UpdateTaskID).Methods(http.MethodPut)
-	r.HandleFunc("/Task", AddTask).Methods(http.MethodPost)
-	r.HandleFunc("/Tasks/search", SearchTaskParams).Methods(http.MethodGet)
+	tab := []TaskDb{}
+	var def = Search{Title: "date"}
+	usersCollection := client.Database("testing").Collection("users")
+	cur, err := usersCollection.Find(context.TODO(), def)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer cur.Close(context.TODO())
+	for cur.Next(context.TODO()) {
+		//print element data from collection
+		var a TaskDb
+		cur.Decode(&a)
+		tab = append(tab, a)
+	}
+	if err := cur.Err(); err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(tab)
+	// r := mux.NewRouter()
+	// // Routes consist of a path and a handler function.
+	// r.HandleFunc("/Tasks", GetAllTasks).Methods(http.MethodGet)
+	// r.HandleFunc("/Task/{id}", GetTaskID).Methods(http.MethodGet)
+	// r.HandleFunc("/Task/{id}", DeleteTaskID).Methods(http.MethodDelete)
+	// r.HandleFunc("/Task/{id}", UpdateTaskID).Methods(http.MethodPut)
+	// r.HandleFunc("/Task", AddTask).Methods(http.MethodPost)
+	// r.HandleFunc("/Tasks/search", SearchTaskParams).Methods(http.MethodGet)
 
-	r.HandleFunc("/", DispHelp).Methods(http.MethodGet)
-	// Bind to a port and pass our router in
-	fmt.Println("Server is up in 8080")
-	http.ListenAndServe(":8080", r)
+	// r.HandleFunc("/", DispHelp).Methods(http.MethodGet)
+	// // Bind to a port and pass our router in
+	// fmt.Println("Server is up in 8080")
+	// http.ListenAndServe(":8080", r)
 }
 
 func GetAllTasks(w http.ResponseWriter, r *http.Request) {
