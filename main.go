@@ -229,9 +229,9 @@ func UpdateTaskID(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		} else if index.ModifiedCount > 0 {
-			w.WriteHeader(http.StatusAccepted)
+			w.WriteHeader(http.StatusOK)
 		} else {
-			w.WriteHeader(http.StatusBadRequest)
+			w.WriteHeader(http.StatusAccepted)
 		}
 	} else {
 		w.WriteHeader(http.StatusBadRequest)
