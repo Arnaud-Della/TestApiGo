@@ -30,7 +30,7 @@ type MyClient struct {
 	*mongo.Client
 }
 
-type anyJson map[string]interface{}
+//type anyJson map[string]interface{}
 type TaskDb struct {
 	ID            string    `bson:"_id"`
 	Title         string    `bson:"Title"`
@@ -276,8 +276,3 @@ func TryCatch(f func()) func() error {
 		return err
 	}
 }
-
-//client.NewTask(Task{Title: "tttt", DateStart: time.Date(2020, time.April,
-//	11, 21, 34, 01, 0, time.UTC), DateStop: time.Date(2020, time.April,
-//	11, 21, 34, 01, 0, time.UTC), EstimatedTime: time.Duration.Hours(1), Status: Status(Progress), Tag: "mon tagg"})
-// client.RemoveTask("tttt")
