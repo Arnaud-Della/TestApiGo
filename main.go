@@ -199,7 +199,7 @@ func AddTask(w http.ResponseWriter, r *http.Request) {
 	index, errbdd := client.NewTask(task)
 	if errbdd == nil {
 		w.Header().Add("Content-Type", "application/json")
-		w.Write([]byte("{'ID':'" + index.InsertedID.(primitive.ObjectID).Hex() + "'"))
+		w.Write([]byte("{\"ID\":\"" + index.InsertedID.(primitive.ObjectID).Hex() + "\"}"))
 	} else {
 		w.WriteHeader(http.StatusNotModified)
 	}
