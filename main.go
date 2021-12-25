@@ -67,10 +67,14 @@ func Connect() MyClient {
 	return MyClient{client}
 }
 
-func (client MyClient) GetAllTasks() []TaskDb {
+func (client MyClient) GetAllTasks(filter ...bson.M) []TaskDb {
+	var def bson.M
+	if len(filter) > 0 {
+		def = filter[0]
+	}
 	tab := []TaskDb{}
 	usersCollection := client.Database("testing").Collection("users")
-	cur, err := usersCollection.Find(context.TODO(), bson.D{})
+	cur, err := usersCollection.Find(context.TODO(), def)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -137,11 +141,12 @@ func main() {
 	client = Connect()
 	r := mux.NewRouter()
 	// Routes consist of a path and a handler function.
-	r.HandleFunc("/Tasks", GetAllTasks).Methods("GET")
-	r.HandleFunc("/Task/{id}", GetTaskID).Methods("GET")
+	r.HandleFunc("/Tasks", GetAllTasks).Methods(http.MethodGet)
+	r.HandleFunc("/Task/{id}", GetTaskID).Methods(http.MethodGet)
 	r.HandleFunc("/Task/{id}", DeleteTaskID).Methods(http.MethodDelete)
 	r.HandleFunc("/Task/{id}", UpdateTaskID).Methods(http.MethodPut)
 	r.HandleFunc("/Task", AddTask).Methods(http.MethodPost)
+	r.HandleFunc("/Tasks/search", SearchTaskParams).Methods(http.MethodGet)
 
 	r.HandleFunc("/", DispHelp).Methods(http.MethodGet)
 	// Bind to a port and pass our router in
@@ -192,8 +197,8 @@ func DeleteTaskID(w http.ResponseWriter, r *http.Request) {
 func AddTask(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	var anyJson map[string]interface{}
-	err := decoder.Decode(&anyJson)
-	fmt.Println(err)
+	decoder.Decode(&anyJson)
+	//fmt.Println(err)
 	var task Task
 	if err := TryCatch(func() {
 		task.Title = anyJson["Title"].(string)
@@ -213,6 +218,7 @@ func AddTask(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "application/json")
 		w.Write([]byte("{\"ID\":\"" + index.InsertedID.(primitive.ObjectID).Hex() + "\"}"))
 	} else {
+		fmt.Println(errbdd)
 		w.WriteHeader(http.StatusNotModified)
 	}
 
@@ -236,6 +242,15 @@ func UpdateTaskID(w http.ResponseWriter, r *http.Request) {
 	} else {
 		w.WriteHeader(http.StatusBadRequest)
 	}
+}
+
+func SearchTaskParams(w http.ResponseWriter, r *http.Request) {
+	mymap := r.URL.Query()
+	keys := make([]string, 0, len(mymap))
+	for k := range mymap {
+		keys = append(keys, k)
+	}
+	fmt.Println(keys)
 }
 
 func DispHelp(w http.ResponseWriter, r *http.Request) {
