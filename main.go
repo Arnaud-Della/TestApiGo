@@ -245,12 +245,7 @@ func UpdateTaskID(w http.ResponseWriter, r *http.Request) {
 }
 
 func SearchTaskParams(w http.ResponseWriter, r *http.Request) {
-	mymap := r.URL.Query()
-	keys := make([]string, 0, len(mymap))
-	for k := range mymap {
-		keys = append(keys, k)
-	}
-	fmt.Println(keys)
+
 }
 
 func DispHelp(w http.ResponseWriter, r *http.Request) {
