@@ -30,23 +30,24 @@ type MyClient struct {
 	*mongo.Client
 }
 
+type anyJson map[string]interface{}
 type TaskDb struct {
 	ID            string    `bson:"_id"`
-	Title         string    `bson:"title"`
-	DateStart     time.Time `bson:"dateStart"`
-	DateStop      time.Time `bson:"dateStop"`
-	EstimatedTime float64   `bson:"estimatedTime"`
-	Status        Status    `bson:"status"`
-	Tag           string    `bson:"tag"`
+	Title         string    `bson:"Title"`
+	DateStart     time.Time `bson:"DateStart"`
+	DateStop      time.Time `bson:"DateStop"`
+	EstimatedTime int64     `bson:"EstimatedTime"`
+	Status        Status    `bson:"Status"`
+	Tag           string    `bson:"Tag"`
 }
 
 type Task struct {
-	Title         string
-	DateStart     time.Time
-	DateStop      time.Time
-	EstimatedTime int64
-	Status        Status
-	Tag           string
+	Title         string    `bson:"Title"`
+	DateStart     time.Time `bson:"DateStart"`
+	DateStop      time.Time `bson:"DateStop"`
+	EstimatedTime int64     `bson:"EstimatedTime"`
+	Status        Status    `bson:"Status"`
+	Tag           string    `bson:"Tag"`
 }
 
 func Connect() MyClient {
@@ -122,6 +123,14 @@ func (client MyClient) RemoveTask(id string) (*mongo.DeleteResult, error) {
 	return index, err
 }
 
+func (client MyClient) UpdateTask(data bson.M, id string) (*mongo.UpdateResult, error) {
+	usersCollection := client.Database("testing").Collection("users")
+	final, _ := primitive.ObjectIDFromHex(id)
+	index, err := usersCollection.UpdateByID(context.TODO(), final, bson.M{"$set": data})
+	fmt.Println(index, err)
+	return index, err
+}
+
 var client MyClient
 
 func main() {
@@ -131,7 +140,10 @@ func main() {
 	r.HandleFunc("/Tasks", GetAllTasks).Methods("GET")
 	r.HandleFunc("/Task/{id}", GetTaskID).Methods("GET")
 	r.HandleFunc("/Task/{id}", DeleteTaskID).Methods(http.MethodDelete)
+	r.HandleFunc("/Task/{id}", UpdateTaskID).Methods(http.MethodPut)
 	r.HandleFunc("/Task", AddTask).Methods(http.MethodPost)
+
+	r.HandleFunc("/", DispHelp).Methods(http.MethodGet)
 	// Bind to a port and pass our router in
 	fmt.Println("Server is up in 8080")
 	http.ListenAndServe(":8080", r)
@@ -206,15 +218,40 @@ func AddTask(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func DispHelp() []byte {
-	return []byte(`    {
+func UpdateTaskID(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	decoder := json.NewDecoder(r.Body)
+	var test bson.M
+	decoder.Decode(&test)
+	index, err := client.UpdateTask(test, vars["id"])
+	if err == nil {
+		if index.MatchedCount == 0 {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		} else if index.ModifiedCount > 0 {
+			w.WriteHeader(http.StatusAccepted)
+		} else {
+			w.WriteHeader(http.StatusBadRequest)
+		}
+	} else {
+		w.WriteHeader(http.StatusBadRequest)
+	}
+}
+
+func DispHelp(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte(`
+	INSERTION DE NOUVELLE TACHE
+	{
         "Title": "mon titre",
         "DateStart": "jj/mm/aaaa hh:mm:ss",
         "DateStop": "jj/mm/aaaa hh:mm:ss",
         "EstimatedTime": "jj/mm/aaaa hh:mm:ss",
         "Status": "Progress or Done or ToDo or Failed",
         "Tag": "mon tag"
-    }`)
+    }
+
+	PAS DE TACHE AVEC LE MEME TITRE ACCEPTER
+	`))
 }
 
 func TryCatch(f func()) func() error {
