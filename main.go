@@ -328,7 +328,6 @@ func DispHelp(w http.ResponseWriter, r *http.Request) {
         "Tag": "mon tag"
     }
 
-	PAS DE TACHE AVEC LE MEME TITRE ACCEPTER
 	`))
 }
 
