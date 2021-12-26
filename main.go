@@ -266,10 +266,9 @@ func SearchTaskParams(w http.ResponseWriter, r *http.Request) {
 
 		switch search.DateStart.(type) {
 		case map[string]interface{}:
-			tamp, _ := search.DateStart.(map[string]interface{})
-			tamp["$gte"], _ = dateparse.ParseLocal(tamp["$gte"].(string))
-			tamp["$lt"], _ = dateparse.ParseLocal(tamp["$lt"].(string))
-			search.DateStart = tamp
+			for i := range search.DateStart.(map[string]interface{}) {
+				search.DateStart.(map[string]interface{})[i], _ = dateparse.ParseLocal(search.DateStart.(map[string]interface{})[i].(string))
+			}
 		case string:
 			search.DateStart, _ = dateparse.ParseLocal(search.DateStart.(string))
 		default:
@@ -278,10 +277,9 @@ func SearchTaskParams(w http.ResponseWriter, r *http.Request) {
 
 		switch search.DateStop.(type) {
 		case map[string]interface{}:
-			tamp, _ := search.DateStop.(map[string]interface{})
-			tamp["$gte"], _ = dateparse.ParseLocal(tamp["$gte"].(string))
-			tamp["$lt"], _ = dateparse.ParseLocal(tamp["$lt"].(string))
-			search.DateStop = tamp
+			for i := range search.DateStop.(map[string]interface{}) {
+				search.DateStop.(map[string]interface{})[i], _ = dateparse.ParseLocal(search.DateStop.(map[string]interface{})[i].(string))
+			}
 		case string:
 			search.DateStop, _ = dateparse.ParseLocal(search.DateStop.(string))
 		default:
@@ -298,6 +296,22 @@ func SearchTaskParams(w http.ResponseWriter, r *http.Request) {
 
 func DispHelp(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(`
+	RECHERCHE UNE TACHE
+	{
+		"Title":"titre"
+		"Tag":"tag",   			
+		"DateStart":{
+			"$gte":"05/01/2002",
+			"$lt":"05/01/2003"
+		},     		
+		"DateStop":{
+			"$gte":"05/01/2002",
+			"$lt":"05/01/2003"
+		},      	
+		"Status":"",        	
+		"EstimatedTime":""
+	}
+
 	INSERTION DE NOUVELLE TACHE
 	{
         "Title": "mon titre",
