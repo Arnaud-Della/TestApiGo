@@ -57,6 +57,7 @@ type Search struct {
 	DateStop      interface{} `bson:"DateStop,omitempty"`
 	Status        Status      `bson:"Status,omitempty"`
 	EstimatedTime interface{} `bson:"EstimatedTime,omitempty"`
+	Approximation bool        `bson:"-"`
 }
 
 func Connect() MyClient {
@@ -259,7 +260,7 @@ func SearchTaskParams(w http.ResponseWriter, r *http.Request) {
 	//var searchF Search
 	decoder.Decode(&search)
 
-	// searchF.Title = search.Title
+	search.Title = "/" + search.Title + "/"
 	// searchF.Tag = search.Tag
 	// searchF.Status = search.Status
 	if err := TryCatch(func() {
