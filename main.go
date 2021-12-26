@@ -51,13 +51,12 @@ type Task struct {
 }
 
 type Search struct {
-	Title         string      `bson:"Title,omitempty"`
-	Tag           string      `bson:"Tag,omitempty"`
+	Title         interface{} `bson:"Title,omitempty"`
+	Tag           interface{} `bson:"Tag,omitempty"`
 	DateStart     interface{} `bson:"DateStart,omitempty"`
 	DateStop      interface{} `bson:"DateStop,omitempty"`
 	Status        Status      `bson:"Status,omitempty"`
 	EstimatedTime interface{} `bson:"EstimatedTime,omitempty"`
-	Approximation bool        `bson:"-"`
 }
 
 func Connect() MyClient {
@@ -260,7 +259,7 @@ func SearchTaskParams(w http.ResponseWriter, r *http.Request) {
 	//var searchF Search
 	decoder.Decode(&search)
 
-	search.Title = "/" + search.Title + "/"
+	//search.Title = "/" + search.Title + "/"
 	// searchF.Tag = search.Tag
 	// searchF.Status = search.Status
 	if err := TryCatch(func() {
@@ -293,6 +292,12 @@ func SearchTaskParams(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Println(search)
+	var conv bson.M
+	data, _ := bson.Marshal(search)
+	bson.Unmarshal(data, &conv)
+	res, _ := json.Marshal(client.GetAllTasks(conv))
+	w.Header().Add("Content-Type", "application/json")
+	w.Write(res)
 }
 
 func DispHelp(w http.ResponseWriter, r *http.Request) {
