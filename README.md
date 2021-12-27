@@ -28,7 +28,7 @@ GET /Task/{id}
 
 On peut affciher l'aide :
 
-GET /Help
+GET /
 
 On peut filtrer les tache avec des criteres de recherches :
 
